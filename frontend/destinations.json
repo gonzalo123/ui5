@@ -1,0 +1,19 @@
+{
+  "server": {
+    "port": "8080",
+    "path": "/webapp/index.html",
+    "open": true
+  },
+  "service": {
+    "sapui5": {
+      "useSAPUI5": true,
+      "version": "1.54.8"
+    }
+  },
+  "destinations": {
+    "BACKEND": {
+      "url": "http://localhost:8888",
+      "auth": "superSecretUser:superSecretPassword"
+    }
+  }
+}

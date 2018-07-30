@@ -1,0 +1,8 @@
+/dist
+/ci/tmp
+/ci/tools
+.mta
+*.mtar
+node_modules
+npm-debug.log
+deploy-mta-HS.properties
