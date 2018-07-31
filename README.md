@@ -1,13 +1,15 @@
-## Working locally with SAPUI5 (with PHP/Lumen Backend) and deploying to SCP
+## Working with SAPUI5 locally (with PHP/Lumen Backend) and deploying to SCP
 
-When I work in SAPUI5 projects I normally use WebIDE. WebIDE is a great tool but I'm more confortable working locally, with my IDE. 
-I've this idea in my mind but I never find the time slot to do it. Finally, after finding this project in github (https://github.com/hschaefer123/cachebuster) I realized how easy it's and I started to work with this project and adapt it to my needs
+When I work with SAPUI5 projects I normally use WebIDE. WebIDE is a great tool but I'm more confortable working locally with my IDE. 
+I've this idea in my mind but I never find the time slot to work on it. Finally, after finding this project in github (https://github.com/hschaefer123/cachebuster), I realized how easy it's and I started to work with this project and adapt it to my needs.
 
-The base of this project is localneo. Localneo start a http serve based on neo-app.json file. That means We're going to use the same configuration than we'll in production at SCP. Of course we'll need destinations. We only need one extra file called destination.json where we'll set up our destinations (one http proxy, nothing else).
+The base of this project is localneo (https://www.npmjs.com/package/@uniorg/localneo). Localneo starts a http server based on neo-app.json file. That means we're going to use the same configuration than we've got in production at SCP. Of course we'll need destinations. We only need one extra file called destination.json where we'll set up our destinations (it creates one http proxy, nothing else).
+
+In this project I'll create a simple example application that works with one API server.
 
 ## The backend
 
-For example I'll use in this example one PHP/Lumen application
+ I'll use in this example one PHP/Lumen application:
 
 ```php
 $app->router->group(['prefix' => '/api', 'middleware' => Middleware\AuthMiddleware::NAME], function (Router $route) {
@@ -31,7 +33,7 @@ class HomeHandler
 }
 ```
 
-Both routes are under one middelware to provide the authentication.
+Both routes are under one middleware to provide the authentication.
 
 ```php
 namespace App\Http\Middleware;
@@ -81,11 +83,11 @@ class AuthMiddleware
 }
 ```
 
-That means our service will need a Basic Authentication and also one Token based authentication.
+That means our service will need Basic Authentication and also one Token based authentication.
 
 ## The frontend
 
-Our ui5 application will use one destination called BACKEND. We'll configure it within our neo-app.json file
+Our ui5 application will use one destination called BACKEND. We'll configure it in our neo-app.json file
 ```json
     ...
     {
@@ -99,8 +101,7 @@ Our ui5 application will use one destination called BACKEND. We'll configure it 
     ...
 ```
 
-Now we'll create our extra file called destinations.json
-localneo will use this file to create a http server to serve our frontend locally using the destination.
+Now we'll create our extra file called destinations.json. Localneo will use this file to create a web server to serve our frontend locally (using the destination).
 
 As I said before our backend will need a Basic Authentication. This Authentication will be set up in the destination configuration
 
@@ -126,7 +127,7 @@ As I said before our backend will need a Basic Authentication. This Authenticati
 }
 ```
 
-Our application will be a simple List of
+Our application will be a simple list of items
 
 ```xml
 <mvc:View controllerName="gonzalo123.controller.App"
@@ -169,7 +170,8 @@ Our application will be a simple List of
 
 ![UI5](img/ui5.png "UI5")
 
-When we click on GET we'll perform a GET request to the backend and we'll increment the counter. The same with POST
+When we click on GET we'll perform a GET request to the backend and we'll increment the counter. The same with POST.
+We'll also show de date provided by the backend in a MessageToast.
 
 ```js
 sap.ui.define([
@@ -218,9 +220,9 @@ And the frontend
 
 ## Debugging locally
 
-As we're working locally we can use local debugger in the backend and we can use breakpoints, inspect variables ...
+As we're working locally we can use local debugger in the backend and we can use breakpoints, inspect variables, etc.
 
-We also can debug the frontend using chrome developer tools. We also can map our local filesystem in the browser and we can save files directly with chrome.
+We also can debug the frontend using Chrome developer tools. We can also map our local filesystem in the browser and we can save files directly in chrome.
 
 ## Testing
 
@@ -230,7 +232,7 @@ We can test the backend using phpunit and run our tests with
 Here we can see a simple test of the backend
 
 ```php
-public function testAuthorizedRequest()
+    public function testAuthorizedRequest()
     {
         $headers = [
             'Authorization2' => 'Bearer superSecretToken',
@@ -264,7 +266,7 @@ public function testAuthorizedRequest()
 We also can test the frontend using OPA5. 
 ![OPA5](img/opa5.png "OPA5")
 
-As Backend is already tested we'll mock the backend here using sinon server
+As Backend is already tested we'll mock the backend here using sinon (https://sinonjs.org/) server
 
 ```js
 ...
@@ -283,6 +285,7 @@ As Backend is already tested we'll mock the backend here using sinon server
 ```
 
 The configuration of our sinon server:
+
 ```js
 sap.ui.define(
   ["test/server"],
@@ -312,51 +315,45 @@ sap.ui.define(
 ```
 
 ## The build process
-Before uploading the application to SCP we need to build it. The build process optimizes the files and creates the sap-ui-cachebuster-info.json file (to ensure our users aren't using a cached version of our application)
+Before uploading the application to SCP we need to build it. The build process optimizes the files and creates Component-preload.js and sap-ui-cachebuster-info.json file (to ensure our users aren't using a cached version of our application)
 We'll use grunt to build our application. Here we can see our Gruntfile.js
 
 ```js
-module.exports = function(grunt) {
-    "use strict";
+module.exports = function (grunt) {
+  "use strict";
 
-    require('load-grunt-tasks')(grunt);
-    require('time-grunt')(grunt);
+  require('load-grunt-tasks')(grunt);
+  require('time-grunt')(grunt);
 
-    grunt.config.merge({
-        pkg: grunt.file.readJSON('package.json'),
-        jshint: {
-            all: ['Gruntfile.js', 'webapp/**/*.js'],
-            options: {
-                globals: grunt.file.readJSON('.jshintrc')
-            }
+  grunt.config.merge({
+    pkg: grunt.file.readJSON('package.json'),
+    watch: {
+      js: {
+        files: ['Gruntfile.js', 'webapp/**/*.js', 'webapp/**/*.properties'],
+        tasks: ['jshint'],
+        options: {
+          livereload: true
+        }
+      },
+
+      livereload: {
+        options: {
+          livereload: true
         },
-        watch: {
-            js: {
-                files: ['Gruntfile.js', 'webapp/**/*.js', 'webapp/**/*.properties'],
-                tasks: ['jshint'],
-                options: {
-                    livereload: true
-                }
-            },
+        files: [
+          'webapp/**/*.html',
+          'webapp/**/*.js',
+          'webapp/**/*.css'
+        ]
+      }
+    }
+  });
 
-            livereload: {
-                options: {
-                    livereload: true
-                },
-                files: [
-                    'webapp/**/*.html',
-                    'webapp/**/*.js',
-                    'webapp/**/*.css'
-                ]
-            }
-        },
-    });
-
-    grunt.registerTask("default", [
-        "clean",
-        "jshint",
-        "build"
-    ]);
+  grunt.registerTask("default", [
+    "clean",
+    "lint",
+    "build"
+  ]);
 };
 ```
 
@@ -373,7 +370,8 @@ Basically we need to download MTA Archive builder and extract it to ./ci/tools/m
 Also we need SAP Cloud Platform Neo Environment SDK (./ci/tools/neo-java-web-sdk/)
 We can download those binaries from here: https://tools.hana.ondemand.com/#cloud
 
-Then we need to fullfill our scp credentials in ./ci/deploy-mta.properties and configure our application in ./ci/mta.yaml
+Then we need to fulfill our scp credentials in ./ci/deploy-mta.properties and configure our application in ./ci/mta.yaml
 Finally we will run ./ci/deploy-mta.sh (here we can set up our scp password in order to input it within each deploy)
 
+[![Working with SAPUI5 locally (with PHP/Lumen Backend) and deploying to SCP](http://img.youtube.com/vi/V9Hnps9xx7M/0.jpg)](https://www.youtube.com/watch?v=V9Hnps9xx7M)
 
